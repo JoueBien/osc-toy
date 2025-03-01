@@ -1,4 +1,4 @@
-import { textEncoder } from "./encoders";
+import { textEncoder } from "./encoders/baseEncoders";
 
 const BUFFER_PADDING = {
   0: Buffer.from(""),
@@ -17,7 +17,6 @@ export function calcStringBufferPadding(
 
 /** Convert a string to a buffer and make sure it is 4 aligned with null characters. */
 export function stringToPaddedBuffer(str: string) {
-  // TODO: Make sure this adds 4 on the end of str that evenly fall into 4
   const bufferStr = Buffer.from(textEncoder.encode(str));
   const paddingNo = calcStringBufferPadding(bufferStr);
   const paddedBuffer = Buffer.concat([bufferStr, BUFFER_PADDING[paddingNo]]);

@@ -1,11 +1,9 @@
 import { UdpClient } from "./udpClient";
 import { stringToPaddedBuffer } from "./utils/stringToPaddedBuffer";
-import {
-  decodeAndPopBlob,
-  decodeAndPopFloat,
-  decodeAndPopInit,
-  decodeAndPopString,
-} from "./utils/decoders";
+import { decodeAndPopString } from "./utils/decoders/decodeAndPopString";
+import { decodeAndPopInit } from "./utils/decoders/decodeAndPopInit";
+import { decodeAndPopFloat } from "./utils/decoders/decodeAndPopFloat";
+import { decodeAndPopBlob } from "./utils/decoders/decodeAndPopBlob";
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
