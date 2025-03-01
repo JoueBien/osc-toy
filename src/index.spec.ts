@@ -85,9 +85,9 @@ describe("yes", () => {
     });
     try {
       await client.connect();
-      client.onMessage((message) =>
-        console.log("@@@return", decodeMessage(message))
-      );
+      // client.onMessage((message) =>
+      //   // console.log("@@@return", decodeMessage(message))
+      // );
       await client.send(
         Buffer.concat([
           // stringToPaddedBuffer("/xinfo"),

@@ -52,7 +52,7 @@ export class UdpClient {
   async send(msg: string | NodeJS.ArrayBufferView): Promise<boolean | Error> {
     const floatingPromise = new Promise<boolean | Error>((resolve, rejects) => {
       this.client.send(msg, (err) => {
-        console.log(msg);
+        // console.log(msg);
         if (err !== null) {
           return rejects(err);
         }
