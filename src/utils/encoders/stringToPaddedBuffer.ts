@@ -1,4 +1,4 @@
-import { textEncoder } from "./encoders/baseEncoders";
+import { textEncoder } from "./../encoders/baseEncoders";
 
 const BUFFER_PADDING = {
   0: Buffer.from(""),

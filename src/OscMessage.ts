@@ -4,7 +4,7 @@ import { decodeAndPopInit } from "./utils/decoders/decodeAndPopInit";
 import { decodeAndPopString } from "./utils/decoders/decodeAndPopString";
 import { floatToBuffer } from "./utils/encoders/floatToBuffer";
 import { intToBuffer } from "./utils/encoders/intToBuffer";
-import { stringToPaddedBuffer } from "./utils/stringToPaddedBuffer";
+import { stringToPaddedBuffer } from "./utils/encoders/stringToPaddedBuffer";
 
 export type Args =
   | {
