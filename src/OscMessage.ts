@@ -7,7 +7,7 @@ import { floatToBuffer } from "./utils/encoders/floatToBuffer";
 import { intToBuffer } from "./utils/encoders/intToBuffer";
 import { stringToPaddedBuffer } from "./utils/encoders/stringToPaddedBuffer";
 
-export type Args =
+export type Arg =
   | {
       i: number;
     }
@@ -33,9 +33,15 @@ export type Args =
       N: null;
     };
 
+export type DecodedOscMessage = {
+  address: string;
+  argTypes: string[];
+  args: Arg[];
+};
+
 // TODO: Will not deal with bad input!
 export const OscMessage = {
-  decode: function decode(messageBuffer: Buffer) {
+  decode: function decode(messageBuffer: Buffer): DecodedOscMessage {
     const unit8Array = new Uint8Array(
       messageBuffer.buffer,
       messageBuffer.byteOffset,
@@ -48,47 +54,65 @@ export const OscMessage = {
     const argTypes = _messageTypes.replace(",", "").split("");
 
     // Pull args  out of the rest of the buffer.
-    const args = (() => {
+    const args: Arg[] = (() => {
       let messageItemBuffer = next2;
-      return argTypes.map((argType) => {
-        switch (argType) {
-          // Encoded types
-          case "s": {
-            const { str, unit8Array: next } =
-              decodeAndPopString(messageItemBuffer);
-            messageItemBuffer = next;
-            return { s: str };
+      return argTypes
+        .map((argType) => {
+          switch (argType) {
+            // Encoded types
+            case "s": {
+              const { str, unit8Array: next } =
+                decodeAndPopString(messageItemBuffer);
+              messageItemBuffer = next;
+              const ret: Arg = { s: str };
+              return ret;
+            }
+            case "i": {
+              const { number, unit8Array: next } =
+                decodeAndPopInit(messageItemBuffer);
+              messageItemBuffer = next;
+              const ret: Arg = { i: number };
+              return ret;
+            }
+            case "f": {
+              const { number, unit8Array: next } =
+                decodeAndPopFloat(messageItemBuffer);
+              messageItemBuffer = next;
+              const ret: Arg = { f: number };
+              return ret;
+            }
+            case "b": {
+              const { blob, unit8Array: next } =
+                decodeAndPopBlob(messageItemBuffer);
+              messageItemBuffer = next;
+              // TODO: fix this bad type cast.
+              const ret: Arg = { b: blob as any };
+              return ret;
+            }
+            // Non-encoded types.
+            case "T": {
+              const ret: Arg = { T: true };
+              return ret;
+            }
+
+            case "F": {
+              const ret: Arg = { F: false };
+              return ret;
+            }
+
+            case "N": {
+              const ret: Arg = { N: null };
+              return ret;
+            }
+
+            case "I": {
+              const ret: Arg = { I: Infinity };
+              return ret;
+            }
           }
-          case "i": {
-            const { number, unit8Array: next } =
-              decodeAndPopInit(messageItemBuffer);
-            messageItemBuffer = next;
-            return { i: number };
-          }
-          case "f": {
-            const { number, unit8Array: next } =
-              decodeAndPopFloat(messageItemBuffer);
-            messageItemBuffer = next;
-            return { f: number };
-          }
-          case "b": {
-            const { blob, unit8Array: next } =
-              decodeAndPopBlob(messageItemBuffer);
-            messageItemBuffer = next;
-            return { b: blob };
-          }
-          // Non-encoded types.
-          case "T":
-            return { T: true };
-          case "F":
-            return { F: false };
-          case "N":
-            return { N: null };
-          case "I":
-            return { I: Infinity };
-        }
-        return undefined;
-      });
+          return undefined;
+        })
+        .filter((value) => value !== undefined);
     })();
 
     return {
@@ -97,7 +121,7 @@ export const OscMessage = {
       args,
     };
   },
-  encode: function encode(address: string, argsArray?: Args[]) {
+  encode: function encode(address: string, argsArray?: Arg[]) {
     const args = argsArray || [];
     // Get the OSC type list
     const argTypes: string = args.reduce((all, current) => {
