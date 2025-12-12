@@ -10,7 +10,7 @@ import { decodeAndPopInit } from "./decodeAndPopInit";
  * <values int32> is encoded backwards & so is the data.
  */
 
-export function decodeAndPopBlob(unit8Buf: Uint8Array) {
+export function decodeAndPopBlob(unit8Buf: Uint8Array<ArrayBuffer>) {
   const { number: bufferSize, unit8Array: _blob8Array } =
     decodeAndPopInit(unit8Buf);
   const blob8Array = _blob8Array.slice(0, bufferSize * 4);

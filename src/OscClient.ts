@@ -28,7 +28,7 @@ export class OscClient {
     this.cleanUpController = connected;
 
     this.client.onMessage((msg: Buffer, rinfo: RemoteInfo) => {
-      const decoded = OscMessage.decode(msg);
+      const decoded = OscMessage.decode(Uint8Array.from(msg));
       this.eventEmitter.emit(EMIT_MESSAGE, decoded);
     });
 
@@ -43,11 +43,13 @@ export class OscClient {
     return this.client.send(message);
   }
 
-  onAnyMessage(callBack: (message: DecodedOscMessage) => void) {
+  onAnyMessage<RT = Arg[]>(callBack: (message: DecodedOscMessage<RT>) => void) {
     return this.eventEmitter.listen(EMIT_MESSAGE, callBack);
   }
 
-  onOnceAnyMessage(callBack: (message: DecodedOscMessage) => void) {
+  onOnceAnyMessage<RT = Arg[]>(
+    callBack: (message: DecodedOscMessage<RT>) => void
+  ) {
     return this.eventEmitter.listenOnce(EMIT_MESSAGE, callBack);
   }
 
@@ -59,13 +61,13 @@ export class OscClient {
     return this.eventEmitter.listenOnce(EMIT_ERROR, callBack);
   }
 
-  onMessage(params: {
+  onMessage<RT = Arg[]>(params: {
     address: string;
-    callBack: (message: DecodedOscMessage) => void;
+    callBack: (message: DecodedOscMessage<RT>) => void;
   }) {
     return this.eventEmitter.listen(
       EMIT_MESSAGE,
-      (message: DecodedOscMessage) => {
+      (message: DecodedOscMessage<RT>) => {
         if (message.address === params.address) {
           params.callBack(message);
         }
@@ -73,13 +75,13 @@ export class OscClient {
     );
   }
 
-  onOnceMessage(params: {
+  onOnceMessage<RT = Arg[]>(params: {
     address: string;
-    callBack: (message: DecodedOscMessage) => void;
+    callBack: (message: DecodedOscMessage<RT>) => void;
   }) {
     return this.eventEmitter.listenOnce(
       EMIT_MESSAGE,
-      (message: DecodedOscMessage) => {
+      (message: DecodedOscMessage<RT>) => {
         if (message.address === params.address) {
           params.callBack(message);
         }
@@ -87,33 +89,36 @@ export class OscClient {
     );
   }
 
-  async waitForMessage(params: {
+  async waitForMessage<RT = Arg[]>(params: {
     address: string;
     exitMs?: number;
-  }): Promise<DecodedOscMessage | Error> {
-    let isResolved = false;
-    const resolver = new Promise<DecodedOscMessage | Error>((resolve) => {
+  }): Promise<DecodedOscMessage<RT> | Error> {
+    const resolver = new Promise<DecodedOscMessage<RT> | Error>((resolve) => {
+      const delayController = new AbortController();
+
       const listenerCleanUp = this.onOnceMessage({
         address: params.address,
-        callBack: (message: DecodedOscMessage) => {
+        callBack: (message: DecodedOscMessage<RT>) => {
           if (message.address === params.address) {
-            isResolved = true;
+            delayController.abort();
             resolve(message);
           }
         },
       });
-      delay(params.exitMs || 1000).then(() => {
-        if (isResolved === false) {
-          listenerCleanUp();
-          resolve(new Error(`Too slow to reply on ${params.address}`));
-        }
+
+      delay({
+        ms: params.exitMs || 1000,
+        cancelOnController: delayController,
+      }).then(() => {
+        listenerCleanUp();
+        resolve(new Error(`Too slow to reply on ${params.address}`));
       });
     });
 
     return resolver;
   }
 
-  async sendAndWaitForMessage(params: {
+  async sendAndWaitForMessage<RT = Arg[]>(params: {
     send: {
       address: string;
       args: Arg[];
@@ -123,7 +128,7 @@ export class OscClient {
       exitMs?: number;
     };
   }) {
-    const floatingPromise = this.waitForMessage({
+    const floatingPromise = this.waitForMessage<RT>({
       address: params.listen.address,
       exitMs: params.listen.exitMs,
     });

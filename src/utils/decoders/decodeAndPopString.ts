@@ -1,7 +1,7 @@
 import { textDecoder } from "../encoders/baseEncoders";
 import { calcStringBufferPadding } from "../encoders/stringToPaddedBuffer";
 
-export function decodeAndPopString(unit8Buf: Uint8Array) {
+export function decodeAndPopString(unit8Buf: Uint8Array<ArrayBuffer>) {
   const strEndsAt = unit8Buf.indexOf(0);
   const strBuffer = unit8Buf.slice(0, strEndsAt);
   const str = textDecoder.write(strBuffer);

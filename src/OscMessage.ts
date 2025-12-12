@@ -6,6 +6,15 @@ import { bufferToPaddedBuffer } from "./utils/encoders/bufferToPaddedBuffer";
 import { floatToBuffer } from "./utils/encoders/floatToBuffer";
 import { intToBuffer } from "./utils/encoders/intToBuffer";
 import { stringToPaddedBuffer } from "./utils/encoders/stringToPaddedBuffer";
+// export type ExactlyOneKey<K extends keyof any, V, KK extends keyof any = K> = {
+//   [P in K]: { [Q in P]: V } & { [Q in Exclude<KK, P>]?: never } extends infer O
+//     ? { [Q in keyof O]: O[Q] }
+//     : never;
+// };
+// type ExactlyOneKeyValuePair<
+//   T extends keyof R & string,
+//   R extends Record<string, unknown>
+// > = { [key in T]: R[T] };
 
 export type Arg =
   | {
@@ -18,7 +27,7 @@ export type Arg =
       s: string;
     }
   | {
-      b: Buffer;
+      b: Uint8Array<ArrayBuffer>;
     }
   | {
       T: true;
@@ -33,15 +42,46 @@ export type Arg =
       N: null;
     };
 
-export type DecodedOscMessage = {
+export type IntArg = Extract<Arg, { i: number }>;
+export type FloatArg = Extract<Arg, { f: number }>;
+export type StringArg = Extract<Arg, { s: string }>;
+export type TrueArg = Extract<Arg, { T: true }>;
+export type FalseArg = Extract<Arg, { F: false }>;
+export type InfinityArg = Extract<Arg, { I: number }>;
+export type NullArg = Extract<Arg, { N: null }>;
+
+export type DecodedOscMessage<ArgArray = Arg[]> = {
+  /** The sting for the command. */
   address: string;
-  argTypes: string[];
-  args: Arg[];
+  /** An ordered list of the types of values stored in args. */
+  argTypes: ("i" | "f" | "s" | "T" | "F" | "I" | "N" | "b")[];
+  /** A list of values - order must match argTypes */
+  args: ArgArray;
+};
+
+const SUPPORTED_TYPES: DecodedOscMessage["argTypes"] = [
+  "i",
+  "f",
+  "s",
+  "T",
+  "F",
+  "I",
+  "N",
+  "b",
+];
+
+const t: DecodedOscMessage<[IntArg, FloatArg]> = {
+  address: "",
+  argTypes: ["i", "f"],
+  args: [{ i: 100 }, { f: 100.0 }],
 };
 
 // TODO: Will not deal with bad input!
 export const OscMessage = {
-  decode: function decode(messageBuffer: Buffer): DecodedOscMessage {
+  /** Decode a 1.1 message. Arg types must be provided with in the message. */
+  decode: function decode(
+    messageBuffer: Uint8Array<ArrayBuffer>
+  ): DecodedOscMessage {
     const unit8Array = new Uint8Array(
       messageBuffer.buffer,
       messageBuffer.byteOffset,
@@ -51,9 +91,41 @@ export const OscMessage = {
     const { str: address, unit8Array: next1 } = decodeAndPopString(unit8Array);
     const { str: _messageTypes, unit8Array: next2 } = decodeAndPopString(next1);
     // argTypes are optional in 1.1 - not handled as per the 1.0.
-    const argTypes = _messageTypes.replace(",", "").split("");
+    const argTypes: DecodedOscMessage["argTypes"] = _messageTypes
+      .replace(",", "")
+      .split("")
+      .reduce((allValues, currentType) => {
+        switch (currentType) {
+          case "b":
+            allValues.push(currentType);
+            break;
+          case "i":
+            allValues.push(currentType);
+            break;
+          case "f":
+            allValues.push(currentType);
+            break;
+          case "s":
+            allValues.push(currentType);
+            break;
+          case "T":
+            allValues.push(currentType);
+            break;
+          case "F":
+            allValues.push(currentType);
+            break;
+          case "I":
+            allValues.push(currentType);
+            break;
+          case "N":
+            allValues.push(currentType);
+            break;
+        }
 
-    // Pull args  out of the rest of the buffer.
+        return allValues;
+      }, []);
+
+    // Pull args out of the rest of the buffer.
     const args: Arg[] = (() => {
       let messageItemBuffer = next2;
       return argTypes
@@ -85,8 +157,7 @@ export const OscMessage = {
               const { blob, unit8Array: next } =
                 decodeAndPopBlob(messageItemBuffer);
               messageItemBuffer = next;
-              // TODO: fix this bad type cast.
-              const ret: Arg = { b: blob as any };
+              const ret: Arg = { b: blob };
               return ret;
             }
             // Non-encoded types.
@@ -110,7 +181,6 @@ export const OscMessage = {
               return ret;
             }
           }
-          return undefined;
         })
         .filter((value) => value !== undefined);
     })();
@@ -121,6 +191,8 @@ export const OscMessage = {
       args,
     };
   },
+
+  /** Encode a 1.1 message. Arg types must be provided with in the message. */
   encode: function encode(address: string, argsArray?: Arg[]) {
     const args = argsArray || [];
     // Get the OSC type list
@@ -129,7 +201,7 @@ export const OscMessage = {
     }, "");
 
     // Encode ars into the buffer
-    const argsAsBuffer: Buffer[] = (args || [])
+    const argsAsBuffer: Uint8Array<ArrayBuffer>[] = (args || [])
       .map((arg) => {
         switch (true) {
           case "i" in arg:

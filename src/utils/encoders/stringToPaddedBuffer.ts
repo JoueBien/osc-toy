@@ -8,15 +8,13 @@ const BUFFER_PADDING = {
   4: Buffer.from(textEncoder.encode("\x00\x00\x00\x00")),
 };
 
-export function calcStringBufferPadding(
-  strBuffer: Buffer | Uint8Array<ArrayBuffer>
-) {
+export function calcStringBufferPadding(strBuffer: Uint8Array<ArrayBuffer>) {
   const paddingNo = 4 - (strBuffer.length % 4);
   return paddingNo;
 }
 
 /** Convert a string to a buffer and make sure it is 4 aligned with null characters. */
-export function stringToPaddedBuffer(str: string) {
+export function stringToPaddedBuffer(str: string): Uint8Array<ArrayBuffer> {
   const bufferStr = Buffer.from(textEncoder.encode(str));
   const paddingNo = calcStringBufferPadding(bufferStr);
   const paddedBuffer = Buffer.concat([bufferStr, BUFFER_PADDING[paddingNo]]);

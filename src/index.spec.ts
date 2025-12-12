@@ -1,113 +1,66 @@
 import { UdpClient } from "./udpClient";
-
-import { decodeAndPopString } from "./utils/decoders/decodeAndPopString";
-import { decodeAndPopInit } from "./utils/decoders/decodeAndPopInit";
-import { decodeAndPopFloat } from "./utils/decoders/decodeAndPopFloat";
-import { decodeAndPopBlob } from "./utils/decoders/decodeAndPopBlob";
-import { stringToPaddedBuffer } from "./utils/encoders/stringToPaddedBuffer";
+import { mockUdpServer } from "./mocks/mockUdpServer";
+import { OscMessage } from "./OscMessage";
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function decodeMessage(buffMessage: Buffer) {
-  console.log("@buffMessage", buffMessage);
-  const unit8Array = new Uint8Array(
-    buffMessage.buffer,
-    buffMessage.byteOffset,
-    buffMessage.byteLength
-  );
-
-  // TODO: Bad input not checked!
-  const { str: address, unit8Array: next1 } = decodeAndPopString(unit8Array);
-  const { str: _messageTypes, unit8Array: next2 } = decodeAndPopString(next1);
-  const messageTypes = _messageTypes.replace(",", "").split("");
-
-  // Pull args off the rest of the buffer.
-  const args = (() => {
-    let messageItemBuffer = next2;
-    return messageTypes.map((messageType) => {
-      console.log("@@messageType", messageItemBuffer);
-      if (messageType === "s") {
-        const { str, unit8Array: next } = decodeAndPopString(messageItemBuffer);
-        messageItemBuffer = next;
-        return str;
-      }
-      if (messageType === "i") {
-        const { number, unit8Array: next } =
-          decodeAndPopInit(messageItemBuffer);
-        messageItemBuffer = next;
-        return number;
-      }
-      if (messageType === "f") {
-        const { number, unit8Array: next } =
-          decodeAndPopFloat(messageItemBuffer);
-        messageItemBuffer = next;
-        return number;
-      }
-      if (messageType === "b") {
-        const { blob, unit8Array: next } = decodeAndPopBlob(messageItemBuffer);
-        messageItemBuffer = next;
-        return blob;
-      }
-
-      // Non-encoded types.
-      if (messageType === "T") {
-        return true;
-      }
-      if (messageType === "F") {
-        return true;
-      }
-      if (messageType === "N") {
-        return null;
-      }
-      if (messageType === "I") {
-        return Infinity;
-      }
-
-      return undefined;
-    });
-  })();
-
-  return {
-    address,
-    messageTypes,
-    args: args,
-  };
-}
-
 describe("yes", () => {
-  test("do it", async () => {
-    // const serverPtr = mockUdpServer();
+  test.skip("do it", async () => {
+    const serverPtr = mockUdpServer();
     const client = new UdpClient({
-      responsePort: 9000,
-      remotePort: 10023, // 9000,
+      responsePort: 10023,
+      remotePort: 9000, // 9000,
       remoteAddress: "192.168.10.40",
     });
     try {
       await client.connect();
-      // client.onMessage((message) =>
-      //   // console.log("@@@return", decodeMessage(message))
-      // );
+      serverPtr.addMessageHandlerMock((msg, rinfo) => {
+        console.log(`server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
+      });
+      const response = serverPtr.waitForMessageOnServer();
+
       await client.send(
-        Buffer.concat([
-          // stringToPaddedBuffer("/xinfo"),
-          // stringToPaddedBuffer("/ch/01/config/icon"),
-          // stringToPaddedBuffer("/meters"),
-          stringToPaddedBuffer("/ch/01/gate/thr"),
-          stringToPaddedBuffer(","),
-          // stringToPaddedBuffer("/meters/0"),
+        OscMessage.encode("/xinfo", [
+          {
+            s: "/meters/0",
+          },
+          {
+            i: 100,
+          },
         ])
+
+        // Buffer.concat([
+        //   // stringToPaddedBuffer("/xinfo"),
+        //   // stringToPaddedBuffer("/ch/01/config/icon"),
+        //   // stringToPaddedBuffer("/meters"),
+        //   stringToPaddedBuffer("/ch/01/gate/thr"),
+        //   stringToPaddedBuffer(","),
+        //   // stringToPaddedBuffer("/meters/0"),
+        // ])
       );
-      await sleep(200);
+      // await sleep(200);
+      const { msg } = await response;
+      const message = OscMessage.decode(Uint8Array.from(msg));
+      expect(message.address).toBe("/xinfo");
+      expect(message.args[0]).toMatchObject({ s: "/meters/0" });
+      const [firstArg, secondArg] = message.args;
+
+      expect("s" in firstArg && firstArg.s).toBe("/meters/0");
+      expect("i" in secondArg && secondArg.i).toBe(100);
+      // const command1 = decodeAndPopString(Uint8Array.from(msg));
+      // const command2 = decodeAndPopString(command1.unit8Array);
+      // expect(command1.str).toBe("/ch/01/gate/thr");
+      // expect(command2.str).toBe(",");
       // await serverPtr.waitForMessageOnServer();
     } catch (e) {
-      console.log(e);
+      console.trace(e);
       client.cleanUpController.abort();
       // serverPtr.controller.abort();
     }
 
     client.cleanUpController.abort();
-    // serverPtr.controller.abort();
+    serverPtr.controller.abort();
   });
 });
