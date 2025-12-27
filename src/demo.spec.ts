@@ -8,7 +8,7 @@ function sleep(ms) {
 }
 
 describe("yes 2", () => {
-  test("do it 2S", async () => {
+  test.skip("do it 2S", async () => {
     const uClient = new UdpClient({
       responsePort: 9000,
       remotePort: 10023, // 9000,

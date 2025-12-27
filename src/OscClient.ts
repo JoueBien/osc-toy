@@ -3,6 +3,7 @@ import { type Arg, DecodedOscMessage, OscMessage } from "./OscMessage";
 import { UdpClient } from "./udpClient";
 import { delay } from "./utils/delay";
 import { EventEmitterController } from "./utils/EventEmitterController";
+import { Failure, type Result } from "fail-up";
 
 const EMIT_MESSAGE = "message";
 const EMIT_ERROR = "error";
@@ -18,49 +19,62 @@ export class OscClient {
     this.client = client;
   }
 
-  // Connect and add a single listener so we only decode once.
-  async connect() {
-    /** TODO: deal with client failure & registering clean up. */
+  /** Connect and add a single listener so we only decode once. */
+  async connect(): Promise<Result<AbortController, "connection-failed">> {
     const connected = await this.client.connect();
-    if (connected instanceof Error) {
+    if (connected instanceof Failure) {
       return connected;
     }
     this.cleanUpController = connected;
 
+    /** Set listeners. */
     this.client.onMessage((msg: Buffer, rinfo: RemoteInfo) => {
       const decoded = OscMessage.decode(Uint8Array.from(msg));
       this.eventEmitter.emit(EMIT_MESSAGE, decoded);
     });
 
-    this.client.onError((err: Error) => {
+    this.client.onError((err: Failure<"on-error">) => {
       this.eventEmitter.emit(EMIT_ERROR, err);
     });
+
+    /** Return a clean up controller. */
     return this.cleanUpController;
   }
 
+  /** Check if the underlying client is connected. */
+  async isConnectionOk(): Promise<Result<"ok", "aborted" | "not-connected">> {
+    return this.client.isConnectionOk();
+  }
+
+  /** Send a message. */
   async send(params: { address: string; argsArray?: Arg[] }) {
     const message = OscMessage.encode(params.address, params.argsArray);
     return this.client.send(message);
   }
 
+  /** Add a listener to listen for all messages. */
   onAnyMessage<RT = Arg[]>(callBack: (message: DecodedOscMessage<RT>) => void) {
     return this.eventEmitter.listen(EMIT_MESSAGE, callBack);
   }
 
+  /** Add a listener to listen for any message once. */
   onOnceAnyMessage<RT = Arg[]>(
     callBack: (message: DecodedOscMessage<RT>) => void
   ) {
     return this.eventEmitter.listenOnce(EMIT_MESSAGE, callBack);
   }
 
-  onError(callBack: (err: Error) => void) {
+  /** Add a listener to listen for all errors. */
+  onError(callBack: (err: Failure<"on-error">) => void) {
     return this.eventEmitter.listen(EMIT_ERROR, callBack);
   }
 
-  onOnceError(callBack: (err: Error) => void) {
+  /** Add a listener to listen for any error once. */
+  onOnceError(callBack: (err: Failure<"on-error">) => void) {
     return this.eventEmitter.listenOnce(EMIT_ERROR, callBack);
   }
 
+  /** Add a listener to listen for a messages with an address. */
   onMessage<RT = Arg[]>(params: {
     address: string;
     callBack: (message: DecodedOscMessage<RT>) => void;
@@ -75,6 +89,7 @@ export class OscClient {
     );
   }
 
+  /** Add a listener to listen for a message with an address once. */
   onOnceMessage<RT = Arg[]>(params: {
     address: string;
     callBack: (message: DecodedOscMessage<RT>) => void;
@@ -89,6 +104,7 @@ export class OscClient {
     );
   }
 
+  /** Wait for a message with an address. */
   async waitForMessage<RT = Arg[]>(params: {
     address: string;
     exitMs?: number;
@@ -118,6 +134,7 @@ export class OscClient {
     return resolver;
   }
 
+  /** Send and wait for a message. */
   async sendAndWaitForMessage<RT = Arg[]>(params: {
     send: {
       address: string;

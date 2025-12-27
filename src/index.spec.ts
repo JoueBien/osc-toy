@@ -2,20 +2,16 @@ import { UdpClient } from "./udpClient";
 import { mockUdpServer } from "./mocks/mockUdpServer";
 import { OscMessage } from "./OscMessage";
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 describe("yes", () => {
   test.skip("do it", async () => {
     const serverPtr = mockUdpServer();
     const client = new UdpClient({
-      responsePort: 10023,
+      responsePort: 1023,
       remotePort: 9000, // 9000,
       remoteAddress: "192.168.10.40",
     });
     try {
-      await client.connect();
+      // await client.connect();
       serverPtr.addMessageHandlerMock((msg, rinfo) => {
         console.log(`server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
       });

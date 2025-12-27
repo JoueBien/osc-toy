@@ -6,15 +6,6 @@ import { bufferToPaddedBuffer } from "./utils/encoders/bufferToPaddedBuffer";
 import { floatToBuffer } from "./utils/encoders/floatToBuffer";
 import { intToBuffer } from "./utils/encoders/intToBuffer";
 import { stringToPaddedBuffer } from "./utils/encoders/stringToPaddedBuffer";
-// export type ExactlyOneKey<K extends keyof any, V, KK extends keyof any = K> = {
-//   [P in K]: { [Q in P]: V } & { [Q in Exclude<KK, P>]?: never } extends infer O
-//     ? { [Q in keyof O]: O[Q] }
-//     : never;
-// };
-// type ExactlyOneKeyValuePair<
-//   T extends keyof R & string,
-//   R extends Record<string, unknown>
-// > = { [key in T]: R[T] };
 
 export type Arg =
   | {
@@ -57,23 +48,6 @@ export type DecodedOscMessage<ArgArray = Arg[]> = {
   argTypes: ("i" | "f" | "s" | "T" | "F" | "I" | "N" | "b")[];
   /** A list of values - order must match argTypes */
   args: ArgArray;
-};
-
-const SUPPORTED_TYPES: DecodedOscMessage["argTypes"] = [
-  "i",
-  "f",
-  "s",
-  "T",
-  "F",
-  "I",
-  "N",
-  "b",
-];
-
-const t: DecodedOscMessage<[IntArg, FloatArg]> = {
-  address: "",
-  argTypes: ["i", "f"],
-  args: [{ i: 100 }, { f: 100.0 }],
 };
 
 // TODO: Will not deal with bad input!

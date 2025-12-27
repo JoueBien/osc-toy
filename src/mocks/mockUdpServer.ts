@@ -1,4 +1,7 @@
 import dgram from "node:dgram";
+import { Arg, DecodedOscMessage, OscMessage } from "../OscMessage";
+
+export type MockUdpServer = ReturnType<typeof mockUdpServer>;
 
 export function mockUdpServer() {
   const controller = new AbortController();
@@ -19,6 +22,22 @@ export function mockUdpServer() {
       });
       return floatingPromise;
     },
+
+    waitForSpecificOscMessageOnServerOnce: (address: string) => {
+      const floatingPromise = new Promise<DecodedOscMessage<Arg[]>>(
+        (resolve) => {
+          server.once("message", (msg, rinfo) => {
+            const decoded = OscMessage.decode(Uint8Array.from(msg));
+            if (decoded.address === address) {
+              resolve(decoded);
+            }
+            // console.log(`server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
+          });
+        }
+      );
+      return floatingPromise;
+    },
+
     addMessageHandlerMock: (
       action: (msg: Buffer, rinfo: dgram.RemoteInfo) => void
     ) => {
