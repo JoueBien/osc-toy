@@ -108,28 +108,35 @@ export class OscClient {
   async waitForMessage<RT = Arg[]>(params: {
     address: string;
     exitMs?: number;
-  }): Promise<DecodedOscMessage<RT> | Error> {
-    const resolver = new Promise<DecodedOscMessage<RT> | Error>((resolve) => {
-      const delayController = new AbortController();
+  }): Promise<Result<DecodedOscMessage<RT>, "wait-timeout">> {
+    const resolver = new Promise<Result<DecodedOscMessage<RT>, "wait-timeout">>(
+      (resolve) => {
+        const delayController = new AbortController();
 
-      const listenerCleanUp = this.onOnceMessage({
-        address: params.address,
-        callBack: (message: DecodedOscMessage<RT>) => {
-          if (message.address === params.address) {
-            delayController.abort();
-            resolve(message);
-          }
-        },
-      });
+        const listenerCleanUp = this.onOnceMessage({
+          address: params.address,
+          callBack: (message: DecodedOscMessage<RT>) => {
+            if (message.address === params.address) {
+              delayController.abort();
+              resolve(message);
+            }
+          },
+        });
 
-      delay({
-        ms: params.exitMs || 1000,
-        cancelOnController: delayController,
-      }).then(() => {
-        listenerCleanUp();
-        resolve(new Error(`Too slow to reply on ${params.address}`));
-      });
-    });
+        delay({
+          ms: params.exitMs || 1000,
+          cancelOnController: delayController,
+        }).then(() => {
+          listenerCleanUp();
+          resolve(
+            new Failure({
+              message: `Too slow to reply on ${params.address}`,
+              type: "wait-timeout",
+            })
+          );
+        });
+      }
+    );
 
     return resolver;
   }

@@ -1,13 +1,14 @@
 {
-  "name": "osc-ts",
+  "name": "@joue-bien/osc-ts",
   "version": "0.0.1",
   "main": "src/index.ts",
   "scripts": {
     "test": "jest --collect-coverage"
   },
-  "author": "",
-  "license": "MIT",
-  "description": "",
+  "author": "JoueBien",
+  "description": "A typescript library for sending OSC messages over UDP.",
+  "repository": "https://github.com/JoueBien/osc-toy",
+  "license": "MIT NON-AI",
   "dependencies": {
     "fail-up": "1.0.1"
   },

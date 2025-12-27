@@ -14,8 +14,14 @@ export class UdpClient {
   cleanUpController = new AbortController();
 
   constructor(params: {
+    /** Remote port to send messages to. */
     remotePort: number;
+    /**
+     * Remote IP address to send messages to.
+     * @default `"localhost"`
+     */
     remoteAddress?: string;
+    /** Port for the remote OSC server to reply to. */
     responsePort: number;
   }) {
     // Set Local State
