@@ -50,9 +50,11 @@ export type DecodedOscMessage<ArgArray = Arg[]> = {
   args: ArgArray;
 };
 
-// TODO: Will not deal with bad input!
 export const OscMessage = {
-  /** Decode a 1.1 message. Arg types must be provided with in the message. */
+  /**
+   * Decode a 1.1 message. Arg types must be provided with in the message.
+   * TODO: Will not deal with bad input!
+   */
   decode: function decode(
     messageBuffer: Uint8Array<ArrayBuffer>
   ): DecodedOscMessage {
@@ -166,7 +168,10 @@ export const OscMessage = {
     };
   },
 
-  /** Encode a 1.1 message. Arg types must be provided with in the message. */
+  /**
+   * Encode a 1.1 message. Arg types must be provided with in the message.
+   * TODO: Will not deal with bad input!
+   */
   encode: function encode(address: string, argsArray?: Arg[]) {
     const args = argsArray || [];
     // Get the OSC type list
