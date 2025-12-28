@@ -7,7 +7,10 @@
   },
   "author": "JoueBien",
   "description": "A typescript library for sending OSC messages over UDP.",
-  "repository": "https://github.com/JoueBien/osc-toy",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JoueBien/osc-toy.git"
+  },
   "license": "MIT NON-AI",
   "dependencies": {
     "fail-up": "1.0.1"
