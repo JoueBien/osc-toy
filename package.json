@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "main": "src/index.ts",
   "scripts": {
-    "test": "jest --collect-coverage"
+    "test": "jest --collect-coverage",
+    "typecheck": "tsc --noEmit"
   },
   "author": "JoueBien",
   "description": "A typescript library for sending OSC messages over UDP.",
@@ -13,6 +14,7 @@
   },
   "license": "MIT NON-AI",
   "dependencies": {
+    "@joue-bien/audio-transport": "0.0.4",
     "fail-up": "1.0.1"
   },
   "devDependencies": {

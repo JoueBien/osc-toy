@@ -1,7 +1,5 @@
-import { UdpClient } from "./udpClient";
-// import { mockUdpServer } from "./mocks/mockUdpServer";
-import { OscMessage } from "./OscMessage";
-import { OscClient } from "./OscClient";
+import { UdpTransport } from "@joue-bien/audio-transport";
+import { OscTransport } from "./OscTransport";
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -9,18 +7,18 @@ function sleep(ms) {
 
 describe("yes 2", () => {
   test.skip("do it 2S", async () => {
-    const uClient = new UdpClient({
+    const uClient = new UdpTransport({
       responsePort: 9000,
       remotePort: 10023, // 9000,
       remoteAddress: "192.168.56.1",
     });
-    const client = new OscClient(uClient);
+    const client = new OscTransport(uClient);
 
     try {
       await client.connect();
       client.send({
         address: "/-action/setrtasrc",
-        argsArray: [
+        args: [
           {
             i: 1,
           },

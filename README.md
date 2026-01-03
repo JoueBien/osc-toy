@@ -1,61 +1,95 @@
 # @joue-bien/osc-ts
 
-A typescript library for sending OSC (Version 1.1 Only) messages over UDP. This library focuses on sending messages in the node run time & is not suitable for running in a browser.
+A typescript library for sending OSC (Version 1.1 Only - must contain arg types) messages over UDP. This library focuses on sending messages in the node run time & is not suitable for running in a browser.
 
-While there is scope for other networking protocols other than UDP I am only interested in UDP. This library is primarily tested with the X32, as that is the only OSC hardware I have.
+While there is scope for other networking protocols other than UDP, I am only interested in UDP. This library is primarily tested with the X32, as that is the only OSC hardware I have.
 
-## Further reading
+# Further reading
 
-- [OSC 1.1](https://opensoundcontrol.stanford.edu/spec-1_1.html) - Documentation
-- [Fail Up](https://www.npmjs.com/package/fail-up) - The error handling library
+- [dgram](https://nodejs.org/api/dgram.html) - Node's socket Documentation.
+- [OSC 1.1](https://opensoundcontrol.stanford.edu/spec-1_1.html) - Open Sound Control documentation.
+- [@joue-bien/audio-transport](https://github.com/JoueBien/audio-transport#readme) - The library used for the underlying UDP transport.
+- [Fail Up](https://www.npmjs.com/package/fail-up) - The error handling library.
 
 ## Install
 
 `npm install @joue-bien/osc-ts`
 
-## Usage
+# Usage
+
+## Transport as a Client
 
 ### Connecting
 
 ```typescript
-import { UdpClient, OscClient } from "@joue-bien/osc-ts";
+import { UdpTransport, OscTransport } from "@joue-bien/osc-ts";
 
 // Set up the UDP client.
-const uspClient = new UdpClient({
+const udpTransport = new UdpTransport({
   remotePort: 9000, // Remote port to send messages to.
   remoteAddress: "192.168.1.40", // Remote IP address to send messages to.
   responsePort: 1023, // Port for the remote OSC server to reply to.
 });
 
-// set up the OSC client and connect
-const client = new OscClient(uClient);
+// Set up the OSC client and connect.
+const client = new OscTransport(udpTransport);
 const cleanUpController = await client.connect();
 ```
 
-### Disconnecting
+### Sending messages
 
-To stop listeners and to release the response port you need to call abort on the OSC clients abort controller.
-
-```typescript
-client.cleanUpController.abort();
-```
-
-Once the OSC client has been aborted the OSC client and UDP client are done and ready to be trash collected. If you want to re-establish a connection or change/update a connection you must create new instances.
-
-If you try to add a new listener or send a message with an aborted client an error will be returned instead.
-
-### Send Messages
-
-Messages can be sent to the remote OSC device.
+A connected transport can send messages to a remote OSC server.
 
 ```typescript
-const client = new OscClient(uClient);
 client.send({
   address: "/fader/01",
-  // argsArray is optional.
-  argsArray: [{ f: 0.5 }],
+  args: [{ f: 0.5 }],
 });
 ```
+
+## Transport as a Server
+
+### Start listening
+
+```typescript
+import { UdpTransport, OscTransport } from "@joue-bien/osc-ts";
+
+const udpTransport = new UdpTransport({
+  responsePort: 9000,
+});
+
+const server = new OscTransport(udpTransport);
+const cleanUpController = await server.listen();
+```
+
+### Responding to messages
+
+When the transport is listening it can send messages back to any clients that have sent it messages.
+
+```typescript
+// Sending a message to a known client.
+await server.respond({
+  address: "/message",
+  args: [{ i: 1234 }],
+  remoteAddress: "localhost",
+  remotePort: 9000,
+});
+
+// Sending a message to a client that sent the server a message.
+server.onAnyMessage((params: { decoded; rinfo }) => {
+  const { address, port } = rinfo;
+  server.respond({
+    address: "/message",
+    args: [{ i: 1234 }],
+    remoteAddress: address,
+    remotePort: port,
+  });
+});
+```
+
+## Listening for messages
+
+Both the server and client can listen for messages.
 
 ### Message types
 
@@ -91,15 +125,43 @@ const infinityArgument: FalseArg = { I: Infinity };
 const nullArgument: FalseArg = { N: null };
 ```
 
-### Listening for a specific message
+### On any message
+
+`onAnyMessage` is used to add a function that is called when any message is received.
 
 ```typescript
-// Register a function to run when message with a matching address is received.
-const cleanUp = onMessage({
-  address: "/fader/01",
-  callBack: (message) => {
-    const { address, argTypes, args } = message;
-    console.log(address, argTypes, args);
+const cleanUp = transport.onAnyMessage((params: { msg; decoded; rinfo }) => {
+  console.log(msg, decoded, rinfo);
+});
+
+// Un-register the function by calling the returned clean up.
+cleanUp();
+```
+
+### On any message once
+
+`onOnceAnyMessage` is used to add function that is called when the next message is received.
+
+```typescript
+const cleanUp = transport.onOnceAnyMessage(
+  (params: { msg; decoded; rinfo }) => {
+    console.log(msg, decoded, rinfo);
+  }
+);
+
+// Un-register the function by calling the returned clean up.
+cleanUp();
+```
+
+### On a message matching an OSC address
+
+`onMessage` is used to add function that is called when message is received with a known OSC address.
+
+```typescript
+const cleanUp = transport.onMessage({
+  address: "/osc/address",
+  callBack: (params: { msg; decoded; rinfo }) => {
+    console.log(msg, decoded, rinfo);
   },
 });
 
@@ -107,16 +169,15 @@ const cleanUp = onMessage({
 cleanUp();
 ```
 
-### Listening for a specific message once
+### On a message matching an OSC address once
+
+`onOnceMessage` is used to add a function that is called when the next message is received with a known OSC address.
 
 ```typescript
-// Register a function to run when message with a matching address is received.
-const cleanUp = onOnceMessage({
-  address: "/fader/01",
-  callBack: (message) => {
-    // When a message matching the address is received  the callback will be automatically unregistered.
-    const { address, argTypes, args } = message;
-    console.log(address, argTypes, args);
+const cleanUp = transport.onOnceMessage({
+  address: "/osc/address",
+  callBack: (params: { msg; decoded; rinfo }) => {
+    console.log(msg, decoded, rinfo);
   },
 });
 
@@ -126,88 +187,90 @@ cleanUp();
 
 ### Wait for a specific message using async await
 
+`waitForMessage` is used to wait for the next message with a known OSC address.
+
 ```typescript
-const message = await client.waitForMessage({
-  address: "/fader/01",
+const { msg, decoded, rinfo } = await transport.waitForMessage({
+  address: "/osc/address",
 });
 ```
 
 Note that if a message is not received with in 1000 milliseconds `waitForMessage` will return an error instead. You can specify a custom time out by passing in a custom `exitMs` value.
 
-```typescript
-const message = await client.waitForMessage({
-  address: "/fader/01",
-  exitMs: 5000,
-});
-```
-
 ### Send a message and wait for a specific reply
 
 ```typescript
-const message = await client.waitForMessage({
+const { msg, decoded, rinfo } = await transport.sendAndWaitForMessage({
   send: {
-    address: "/fader/01",
+    address: "/osc/address",
     args: [],
   },
   listen: {
-    address: "/fader/01/value",
-    exitMs: 5000,
+    address: "/osc/respond/address",
   },
 });
 ```
 
-Note that if a message is not received with in 1000 milliseconds `waitForMessage` will return an error instead. You can specify a custom time out by passing in a custom `listen.exitMs` value.
+Note that if a message is not received with in 500 milliseconds `sendAndWaitForMessage` will return an error instead. You can specify a custom time out by passing in a custom `exitMs` value.
 
-### Listening for any message
+## Handling errors
+
+### On any error
+
+Register a function to run when any error is received.
 
 ```typescript
-// Register a function to run when any message is received.
-const cleanUp = onAnyMessage((message) => {
-  const { address, argTypes, args } = message;
-  console.log(address, argTypes, args);
+const cleanUp = transport.onError((error) => {
+  console.log(error);
 });
 
 // Un-register the function by calling the returned clean up.
 cleanUp();
 ```
 
-### Listening for any message once
+### On single error
+
+Register a function to run when the next error is received.
 
 ```typescript
-// Register a function to run when any message is received.
-const cleanUp = onOnceAnyMessage((message) => {
-  // When a message is received the callback will be automatically unregistered.
-  const { address, argTypes, args } = message;
-  console.log(address, argTypes, args);
+const cleanUp = transport.onOnceError((error) => {
+  console.log(error);
 });
 
 // Un-register the function by calling the returned clean up.
 cleanUp();
 ```
 
-### Listening for any errors
+## Disconnecting
+
+To stop listeners and to release the response/remote ports you need to call abort on the OSC transports abort controller.
 
 ```typescript
-// Register a function to run when any error is received.
-const cleanUp = onError((err) => {
-  console.error(err);
-});
-
-// Un-register the function by calling the returned clean up.
-cleanUp();
+transport.cleanUpController.abort();
 ```
 
-### Listening for any errors once
+Once the OSC transport has been aborted the OSC transport and UDP transport are done and ready to be trash collected. If you want to re-establish a connection or change/update a connection you must create new instances.
+
+If you try to add a new listener or send a message with an aborted transport an error will be returned instead.
+
+## Mocked transport
+
+A mock is included to help with the writing of tests.
+A good example can be found in this packages `src/OscTransport.spec.ts` file.
 
 ```typescript
-// Register a function to run when any error is received.
-const cleanUp = onOnceError((err) => {
-  // When a error is received the callback will be automatically unregistered.
-  console.error(err);
-});
+let serverPtr: MockOscServer;
 
-// Un-register the function by calling the returned clean up.
-cleanUp();
+describe("OscTransport", () => {
+  beforeAll(async () => {
+    serverPtr = await mockOscServer();
+  });
+
+  afterAll(() => {
+    // Make sure to clean up, otherwise your test will leak & leave sockets open.
+    serverPtr.controller.abort();
+  });
+});
 ```
 
 ## Error handling
@@ -221,7 +284,7 @@ const error = new Failure({
 });
 
 if (error.type === "send-failure") {
-  // handle error
+  // Handle error.
   return;
 }
 ```

@@ -7,4 +7,5 @@ module.exports = {
       lines: 80,
     },
   },
+  transformIgnorePatterns: ["node_modules/(?!(@joue-bien/audio-transport)/)"],
 };

@@ -1,5 +1,6 @@
-export { OscClient } from "./OscClient";
-export { UdpClient } from "./udpClient";
+export * from "@joue-bien/audio-transport";
+export { OscTransport } from "./OscTransport";
+
 export {
   OscMessage,
   type Arg,
@@ -11,6 +12,7 @@ export {
   type InfinityArg,
   type NullArg,
   type DecodedOscMessage,
+  type OscMessageEvent,
 } from "./OscMessage";
-export { delay } from "./utils/delay";
-export { EventEmitterController } from "./utils/EventEmitterController";
+
+export { mockOscServer } from "./mocks/mockOscServer";

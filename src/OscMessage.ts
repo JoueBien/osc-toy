@@ -1,11 +1,14 @@
-import { decodeAndPopBlob } from "./utils/decoders/decodeAndPopBlob";
-import { decodeAndPopFloat } from "./utils/decoders/decodeAndPopFloat";
-import { decodeAndPopInit } from "./utils/decoders/decodeAndPopInit";
-import { decodeAndPopString } from "./utils/decoders/decodeAndPopString";
-import { bufferToPaddedBuffer } from "./utils/encoders/bufferToPaddedBuffer";
-import { floatToBuffer } from "./utils/encoders/floatToBuffer";
-import { intToBuffer } from "./utils/encoders/intToBuffer";
-import { stringToPaddedBuffer } from "./utils/encoders/stringToPaddedBuffer";
+import {
+  decodeAndPopInit,
+  decodeAndPopPaddedBuffer,
+  decodeAndPopFloat,
+  decodeAndPopPaddedString,
+  bufferEncoder,
+  floatEncoder,
+  intEncoder,
+  stringEncoder,
+} from "@joue-bien/audio-transport";
+import { RemoteInfo } from "dgram";
 
 export type Arg =
   | {
@@ -50,6 +53,12 @@ export type DecodedOscMessage<ArgArray = Arg[]> = {
   args: ArgArray;
 };
 
+export type OscMessageEvent<ArgArray = Arg[]> = {
+  msg: Buffer<ArrayBufferLike>;
+  decoded: DecodedOscMessage<ArgArray>;
+  rinfo: RemoteInfo;
+};
+
 export const OscMessage = {
   /**
    * Decode a 1.1 message. Arg types must be provided with in the message.
@@ -64,8 +73,10 @@ export const OscMessage = {
       messageBuffer.byteLength
     );
 
-    const { str: address, unit8Array: next1 } = decodeAndPopString(unit8Array);
-    const { str: _messageTypes, unit8Array: next2 } = decodeAndPopString(next1);
+    const { str: address, unit8Array: next1 } =
+      decodeAndPopPaddedString(unit8Array);
+    const { str: _messageTypes, unit8Array: next2 } =
+      decodeAndPopPaddedString(next1);
     // argTypes are optional in 1.1 - not handled as per the 1.0.
     const argTypes: DecodedOscMessage["argTypes"] = _messageTypes
       .replace(",", "")
@@ -110,7 +121,7 @@ export const OscMessage = {
             // Encoded types
             case "s": {
               const { str, unit8Array: next } =
-                decodeAndPopString(messageItemBuffer);
+                decodeAndPopPaddedString(messageItemBuffer);
               messageItemBuffer = next;
               const ret: Arg = { s: str };
               return ret;
@@ -131,7 +142,7 @@ export const OscMessage = {
             }
             case "b": {
               const { blob, unit8Array: next } =
-                decodeAndPopBlob(messageItemBuffer);
+                decodeAndPopPaddedBuffer(messageItemBuffer);
               messageItemBuffer = next;
               const ret: Arg = { b: blob };
               return ret;
@@ -184,13 +195,13 @@ export const OscMessage = {
       .map((arg) => {
         switch (true) {
           case "i" in arg:
-            return intToBuffer(arg.i);
+            return intEncoder.encode(arg.i);
           case "f" in arg:
-            return floatToBuffer(arg.f);
+            return floatEncoder.encode(arg.f);
           case "s" in arg:
-            return stringToPaddedBuffer(arg.s);
+            return stringEncoder.encodePadded(arg.s);
           case "b" in arg:
-            bufferToPaddedBuffer(arg.b);
+            bufferEncoder.encodePadded(arg.b);
         }
         return undefined;
       })
@@ -198,9 +209,9 @@ export const OscMessage = {
 
     // Merge message, type list and args into single buffer
     const messageBuffer = Buffer.concat([
-      stringToPaddedBuffer(address),
+      stringEncoder.encodePadded(address),
       // argTypes are optional in 1.1 - not handled as per the 1.0.
-      stringToPaddedBuffer(`,${argTypes}`),
+      stringEncoder.encodePadded(`,${argTypes}`),
       ...argsAsBuffer,
     ]);
 
