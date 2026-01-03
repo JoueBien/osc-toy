@@ -1,6 +1,6 @@
 {
   "name": "@joue-bien/osc-ts",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "src/index.ts",
   "scripts": {
     "test": "jest --collect-coverage",
