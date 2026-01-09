@@ -14,7 +14,7 @@
   },
   "license": "MIT NON-AI",
   "dependencies": {
-    "@joue-bien/audio-transport": "0.0.4",
+    "@joue-bien/audio-transport": "0.0.6",
     "fail-up": "1.0.1"
   },
   "devDependencies": {
