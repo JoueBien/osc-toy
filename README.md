@@ -64,7 +64,7 @@ const cleanUpController = await server.listen();
 
 ### Responding to messages
 
-When the transport is listening it can send messages back to any clients that have sent it messages.
+When the transport is listening, it can send messages back to any clients that have sent it messages.
 
 ```typescript
 // Sending a message to a known client.
@@ -121,7 +121,7 @@ const floatArgument: FloatArg = { f: 1234.124 };
 const stringArgument: StringArg = { s: "fader" };
 const booleanArgument: TrueArg = { T: true };
 const booleanArgument: FalseArg = { F: false };
-const infinityArgument: FalseArg = { I: Infinity };
+const infinityArgument: InfinityArg = { I: Infinity };
 const nullArgument: FalseArg = { N: null };
 ```
 
@@ -195,7 +195,7 @@ const { msg, decoded, rinfo } = await transport.waitForMessage({
 });
 ```
 
-Note that if a message is not received with in 1000 milliseconds `waitForMessage` will return an error instead. You can specify a custom time out by passing in a custom `exitMs` value.
+Note that if a message is not received with in 500 milliseconds `waitForMessage` will return an error instead. You can specify a custom time out by passing in a custom `exitMs` value.
 
 ### Send a message and wait for a specific reply
 
@@ -243,7 +243,7 @@ cleanUp();
 
 ## Disconnecting
 
-To stop listeners and to release the response/remote ports you need to call abort on the OSC transports abort controller.
+To stop the transports connection and to release the response/remote ports you need to call abort on the OSC transports abort controller.
 
 ```typescript
 transport.cleanUpController.abort();
