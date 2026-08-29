@@ -1,10 +1,6 @@
 import { UdpTransport } from "@joue-bien/audio-transport";
 import { OscTransport } from "./OscTransport";
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 describe("yes 2", () => {
   test.skip("do it 2S", async () => {
     const uClient = new UdpTransport({

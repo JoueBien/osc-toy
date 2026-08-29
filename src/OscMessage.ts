@@ -65,12 +65,12 @@ export const OscMessage = {
    * TODO: Will not deal with bad input!
    */
   decode: function decode(
-    messageBuffer: Uint8Array<ArrayBuffer>
+    messageBuffer: Uint8Array<ArrayBuffer>,
   ): DecodedOscMessage {
     const unit8Array = new Uint8Array(
       messageBuffer.buffer,
       messageBuffer.byteOffset,
-      messageBuffer.byteLength
+      messageBuffer.byteLength,
     );
 
     const { str: address, unit8Array: next1 } =
@@ -81,7 +81,7 @@ export const OscMessage = {
     const argTypes: DecodedOscMessage["argTypes"] = _messageTypes
       .replace(",", "")
       .split("")
-      .reduce((allValues, currentType) => {
+      .reduce<DecodedOscMessage["argTypes"]>((allValues, currentType) => {
         switch (currentType) {
           case "b":
             allValues.push(currentType);

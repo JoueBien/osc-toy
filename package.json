@@ -1,11 +1,12 @@
 {
   "name": "@joue-bien/osc-ts",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "main": "src/index.ts",
   "scripts": {
     "test": "vitest --coverage --run",
     "test:watch": "vitest --coverage",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typecheck:v": "tsc -v"
   },
   "author": "JoueBien",
   "description": "A typescript library for sending OSC messages over UDP.",
@@ -15,16 +16,19 @@
   },
   "license": "MIT NON-AI",
   "dependencies": {
-    "@joue-bien/audio-transport": "0.0.8",
-    "fail-up": "1.0.1"
+    "@joue-bien/audio-transport": "0.0.9",
+    "fail-up": "2.0.0"
   },
   "devDependencies": {
     "@types/node": "22.13.5",
-    "typescript": "5.7.3",
+    "typescript": "^7.0.2",
     "@vitest/coverage-v8": "4.0.17",
     "eslint": "9.39.2",
     "prettier": "3.8.0",
     "vitest": "4.0.17"
+  },
+  "peerDependencies": {
+    "typescript": ">=5 <8"
   },
   "bugs": {
     "url": "https://github.com/JoueBien/osc-toy/issues"
