@@ -33,7 +33,7 @@ export class OscTransport {
     this.client.onMessage((msg: Buffer, rinfo: RemoteInfo) => {
       const data: OscMessageEvent = {
         msg,
-        decoded: OscMessage.decode(Uint8Array.from(msg)),
+        decoded: OscMessage.decode(new Uint8Array(msg)),
         rinfo,
       };
       this.eventEmitter.emit(EMIT_MESSAGE, data);
@@ -60,7 +60,7 @@ export class OscTransport {
     this.client.onMessage((msg: Buffer, rinfo: RemoteInfo) => {
       const data: OscMessageEvent = {
         msg,
-        decoded: OscMessage.decode(Uint8Array.from(msg)),
+        decoded: OscMessage.decode(new Uint8Array(msg)),
         rinfo,
       };
       this.eventEmitter.emit(EMIT_MESSAGE, data);
@@ -138,7 +138,7 @@ export class OscTransport {
         if (event.decoded.address === params.address) {
           params.callBack(event);
         }
-      }
+      },
     );
   }
 
@@ -156,7 +156,7 @@ export class OscTransport {
           cleanUp();
           params.callBack(event);
         }
-      }
+      },
     );
     return cleanUp;
   }
@@ -191,10 +191,10 @@ export class OscTransport {
             new Failure({
               message: `Too slow to reply on ${params.address}`,
               type: "wait-timeout",
-            })
+            }),
           );
         });
-      }
+      },
     );
 
     return resolver;
