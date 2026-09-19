@@ -1,4 +1,3 @@
-export * from "@joue-bien/audio-transport";
 export { OscTransport } from "./OscTransport";
 
 export {

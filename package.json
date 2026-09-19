@@ -1,6 +1,6 @@
 {
   "name": "@joue-bien/osc-ts",
-  "version": "0.0.7",
+  "version": "1.0.0",
   "main": "src/index.ts",
   "scripts": {
     "test": "vitest --coverage --run",
@@ -16,7 +16,7 @@
   },
   "license": "MIT NON-AI",
   "dependencies": {
-    "@joue-bien/audio-transport": "0.0.9",
+    "@joue-bien/audio-transport": "2.0.0",
     "fail-up": "2.0.0"
   },
   "devDependencies": {
