@@ -1,4 +1,4 @@
-export { OscTransport } from "./OscTransport";
+export { OscTransport, type OscTransportParams } from "./OscTransport";
 
 export {
   OscMessage,
