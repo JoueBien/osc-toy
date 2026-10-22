@@ -13,5 +13,3 @@ export {
   type DecodedOscMessage,
   type OscMessageEvent,
 } from "./OscMessage";
-
-export { mockOscServer } from "./mocks/mockOscServer";

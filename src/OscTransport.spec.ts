@@ -1,77 +1,76 @@
-import { UdpTransport } from "@joue-bien/audio-transport";
-import { MockOscServer, mockOscServer } from "./mocks/mockOscServer";
-import { OscTransport } from "./OscTransport";
-import { Failure } from "fail-up";
-
-let serverPtr: MockOscServer;
+import { setupClient } from "./testing/setupClient";
+import { setupServer } from "./testing/setupServer";
+import { sendAndWaitFor } from "@joue-bien/audio-transport/utils";
 
 describe("OscTransport", () => {
-  beforeAll(async () => {
-    serverPtr = await mockOscServer();
-  });
+  const { getCurrentClient } = setupClient();
+  const { getCurrentServer } = setupServer();
 
-  afterAll(() => {
-    serverPtr.controller.abort();
-  });
   it("sends a message", async () => {
-    const udpClient = new UdpTransport({
-      remotePort: 9000,
-      responsePort: 9001,
-      remoteAddress: "localhost",
-    });
+    const client = getCurrentClient();
+    const server = getCurrentServer();
+    await client.connect();
+    await server.listen();
 
-    const client = new OscTransport(udpClient);
-    const cleanUpController = await client.connect();
     const connectionOk = await client.isConnectionOk();
 
-    const response = serverPtr.waitForSpecificOscMessageOnServer({
-      address: "/xinfo",
+    const [message, sendRes] = await sendAndWaitFor({
+      send: async () => {
+        return client.send({
+          address: "/xinfo",
+          args: [{ i: 1234 }],
+        });
+      },
+      waitFor: async () => {
+        return server.waitForMessage({ address: "/xinfo" });
+      },
     });
-
-    const sendRes = await client.send({
-      address: "/xinfo",
-      args: [{ i: 1234 }],
-    });
-
-    const message = await response;
-
-    if (cleanUpController instanceof AbortController) {
-      cleanUpController.abort();
-    }
 
     expect(connectionOk).toBe("ok");
     expect(sendRes).toBe("ok");
     expect(message).toMatchObject({
+      msg: expect.any(Buffer),
       decoded: {
         address: "/xinfo",
         argTypes: ["i"],
       },
+      rinfo: { address: "127.0.0.1", family: "IPv4", port: 9001, size: 16 },
     });
   });
 
   it("responds can send message to remote connections", async () => {
-    const response = serverPtr.waitForSpecificOscMessageOnServer({
-      address: "/message",
+    const client = getCurrentClient();
+    const server = getCurrentServer();
+    await client.connect();
+    await server.listen();
+
+    const [res] = await sendAndWaitFor({
+      send: async () => {
+        return server.respond({
+          address: "/message",
+          args: [{ i: 1234 }],
+          remoteAddress: "localhost",
+          remotePort: 9001,
+        });
+      },
+      waitFor: async () => {
+        return client.waitForMessage({
+          address: "/message",
+        });
+      },
     });
 
-    await serverPtr.respond({
-      address: "/message",
-      args: [{ i: 1234 }],
-      remoteAddress: "localhost",
-      remotePort: 9000,
-    });
+    const connectionOk = await server.isListeningOk();
 
-    const messageReceived = await response;
+    expect(connectionOk).toBe("ok");
 
-    if (messageReceived instanceof Failure) {
-      throw new Error("returned Failure not message");
-    }
-
-    expect(messageReceived).toMatchObject({
+    expect(res).toMatchObject({
+      msg: expect.any(Buffer),
       decoded: {
         address: "/message",
         argTypes: ["i"],
       },
+      rinfo: { address: "127.0.0.1", family: "IPv4", port: 9000, size: 20 },
     });
   });
 });

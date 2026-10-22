@@ -10,15 +10,40 @@ import {
 const EMIT_MESSAGE = "message";
 const EMIT_ERROR = "error";
 
+export type OscTransportParams = {
+  /** Remote port to send messages to. */
+  remotePort?: number;
+  /**
+   * Remote IP address to send messages to.
+   * @default `"localhost"`
+   */
+  remoteAddress?: string;
+  /**
+   * The port to listen for remote messages on.
+   * This is normally the port the remote OSC server to replies to.
+   */
+  responsePort: number;
+
+  /** An external abort controller. Useful if you need to tie multiple instances to the same abort. */
+  cleanUpController?: AbortController;
+};
+
 export class OscTransport {
   client: UdpTransport;
 
   eventEmitter = new EventEmitterController();
 
-  cleanUpController: AbortController = new AbortController();
+  cleanUpController: AbortController;
 
-  constructor(client: UdpTransport) {
-    this.client = client;
+  constructor(params: OscTransportParams) {
+    // Make sure we use a single Abort Controller.
+    const cleanUpController = params.cleanUpController || new AbortController();
+    this.cleanUpController = cleanUpController;
+
+    this.client = new UdpTransport({
+      ...params,
+      cleanUpController,
+    });
   }
 
   /** Connect and add a single listener so we only decode once. */
@@ -217,5 +242,9 @@ export class OscTransport {
     });
     await this.send(params.send);
     return floatingPromise;
+  }
+
+  deconstructor() {
+    this.cleanUpController.abort();
   }
 }

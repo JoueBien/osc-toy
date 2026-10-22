@@ -8,7 +8,9 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "types": ["vitest/globals", "node"],
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "useDefineForClassFields": true,
+    "noImplicitOverride": true
   },
   "lib": ["es2015"],
   "include": ["src/**/*.ts", "tests/**/*.test.ts"]

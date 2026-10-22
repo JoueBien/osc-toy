@@ -22,17 +22,14 @@ While there is scope for other networking protocols other than UDP, I am only in
 ### Connecting
 
 ```typescript
-import { UdpTransport, OscTransport } from "@joue-bien/osc-ts";
+import { OscTransport } from "@joue-bien/osc-ts";
 
-// Set up the UDP client.
-const udpTransport = new UdpTransport({
+// Set up the OSC client and connect.
+const client = new OscTransport({
   remotePort: 9000, // Remote port to send messages to.
   remoteAddress: "192.168.1.40", // Remote IP address to send messages to.
   responsePort: 1023, // Port for the remote OSC server to reply to.
 });
-
-// Set up the OSC client and connect.
-const client = new OscTransport(udpTransport);
 const cleanUpController = await client.connect();
 ```
 
@@ -41,7 +38,7 @@ const cleanUpController = await client.connect();
 A connected transport can send messages to a remote OSC server.
 
 ```typescript
-client.send({
+await client.send({
   address: "/fader/01",
   args: [{ f: 0.5 }],
 });
@@ -52,13 +49,11 @@ client.send({
 ### Start listening
 
 ```typescript
-import { UdpTransport, OscTransport } from "@joue-bien/osc-ts";
+import { OscTransport } from "@joue-bien/osc-ts";
 
-const udpTransport = new UdpTransport({
+const server = new OscTransport({
   responsePort: 9000,
 });
-
-const server = new OscTransport(udpTransport);
 const cleanUpController = await server.listen();
 ```
 
@@ -146,7 +141,7 @@ cleanUp();
 const cleanUp = transport.onOnceAnyMessage(
   (params: { msg; decoded; rinfo }) => {
     console.log(msg, decoded, rinfo);
-  }
+  },
 );
 
 // Un-register the function by calling the returned clean up.
@@ -247,28 +242,35 @@ To stop the transports connection and to release the response/remote ports you n
 
 ```typescript
 transport.cleanUpController.abort();
+
+// Alternatively the classes `deconstructor` will do the same thing.
+transport.deconstructor();
 ```
 
 Once the OSC transport has been aborted the OSC transport and UDP transport are done and ready to be trash collected. If you want to re-establish a connection or change/update a connection you must create new instances.
 
 If you try to add a new listener or send a message with an aborted transport an error will be returned instead.
 
-## Mocked transport
+## Testing
 
-A mock is included to help with the writing of tests.
+You can set up a client in a test by using `setupClient`. You can set up a server in a test by using `setupServer`.
+
+`setupClient` and `setupServer` does all the hard work of setting up a client or server in ViTest and cleaning it back up after the test is done for you.
+
 A good example can be found in this packages `src/OscTransport.spec.ts` file.
 
 ```typescript
-let serverPtr: MockOscServer;
+import { setupClient, setupServer } from "@joue-bien/osc-ts/testing/vitest";
 
 describe("OscTransport", () => {
-  beforeAll(async () => {
-    serverPtr = await mockOscServer();
-  });
+  const { getCurrentClient } = setupClient();
+  const { getCurrentServer } = setupServer();
 
-  afterAll(() => {
-    // Make sure to clean up, otherwise your test will leak & leave sockets open.
-    serverPtr.controller.abort();
+  it("sends a message", async () => {
+    const client = getCurrentClient();
+    const server = getCurrentServer();
+    await client.connect();
+    await server.listen();
   });
 });
 ```
