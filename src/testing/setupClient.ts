@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, vi } from "vitest";
-import { OscTransport, OscTransportParams } from "../OscTransport";
+import { OscTransport, type OscTransportParams } from "../OscTransport.ts";
 
 export function setupClient(params?: Partial<OscTransportParams>) {
   let client: OscTransport;

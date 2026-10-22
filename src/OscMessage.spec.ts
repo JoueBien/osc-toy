@@ -1,4 +1,5 @@
-import { OscMessage } from "./OscMessage";
+import { describe, expect, it } from "vitest";
+import { OscMessage } from "./OscMessage.ts";
 
 describe("OscMessage", () => {
   it("encodes and decodes", () => {

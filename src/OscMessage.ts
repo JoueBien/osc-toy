@@ -8,7 +8,7 @@ import {
   intEncoder,
   stringEncoder,
 } from "@joue-bien/audio-transport";
-import { RemoteInfo } from "dgram";
+import { type RemoteInfo } from "dgram";
 
 export type Arg =
   | {

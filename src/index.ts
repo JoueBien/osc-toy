@@ -1,4 +1,4 @@
-export { OscTransport, type OscTransportParams } from "./OscTransport";
+export { OscTransport, type OscTransportParams } from "./OscTransport.ts";
 
 export {
   OscMessage,
@@ -12,4 +12,4 @@ export {
   type NullArg,
   type DecodedOscMessage,
   type OscMessageEvent,
-} from "./OscMessage";
+} from "./OscMessage.ts";

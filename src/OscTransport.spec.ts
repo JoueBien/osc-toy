@@ -1,6 +1,7 @@
-import { setupClient } from "./testing/setupClient";
-import { setupServer } from "./testing/setupServer";
-import { sendAndWaitFor } from "@joue-bien/audio-transport/utils";
+import { describe, expect, it } from "vitest";
+import { setupClient } from "./testing/setupClient.ts";
+import { setupServer } from "./testing/setupServer.ts";
+import { sendAndWaitFor } from "@joue-bien/audio-transport/utils/async";
 
 describe("OscTransport", () => {
   const { getCurrentClient } = setupClient();

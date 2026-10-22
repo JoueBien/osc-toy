@@ -1,11 +1,9 @@
 import { type RemoteInfo } from "dgram";
-import { type Arg, OscMessage, OscMessageEvent } from "./OscMessage";
+import { type Arg, OscMessage, type OscMessageEvent } from "./OscMessage.ts";
 import { Failure, type Result } from "fail-up";
-import {
-  delay,
-  EventEmitterController,
-  UdpTransport,
-} from "@joue-bien/audio-transport";
+import { UdpTransport } from "@joue-bien/audio-transport";
+import { EventEmitterController } from "@joue-bien/audio-transport/utils/subscriber-list";
+import { delay } from "@joue-bien/audio-transport/utils/async";
 
 const EMIT_MESSAGE = "message";
 const EMIT_ERROR = "error";

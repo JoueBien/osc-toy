@@ -1,5 +1,6 @@
 {
   "name": "@joue-bien/osc-ts",
+  "type": "module",
   "version": "2.0.0",
   "exports": {
     ".": "./src/index.ts",
@@ -19,22 +20,37 @@
   },
   "license": "MIT NON-AI",
   "dependencies": {
-    "@joue-bien/audio-transport": "2.0.1",
-    "fail-up": "2.0.0"
+    "@joue-bien/audio-transport": "3.0.0",
+    "fail-up": "2.0.2"
   },
   "devDependencies": {
     "@types/node": "22.13.5",
     "typescript": "^7.0.2",
-    "@vitest/coverage-v8": "4.0.17",
+    "@vitest/coverage-v8": "5.0.5",
     "eslint": "9.39.2",
     "prettier": "3.8.0",
-    "vitest": "4.0.17"
+    "vitest": "5.0.5"
   },
   "peerDependencies": {
-    "typescript": ">=5 <8"
+    "typescript": ">=5 <8",
+    "vitest": ">=4.0.17 <6",
+    "@vitest/coverage-v8": ">=4.0.17 <6"
   },
   "bugs": {
     "url": "https://github.com/JoueBien/osc-toy/issues"
   },
-  "homepage": "https://github.com/JoueBien/osc-toy#readme"
+  "homepage": "https://github.com/JoueBien/osc-toy#readme",
+  "keywords": [
+    "audio",
+    "sound",
+    "control",
+    "udp",
+    "transport",
+    "OSC",
+    "osc",
+    "open sound control",
+    "Open Sound control",
+    "clock",
+    "typescript"
+  ]
 }

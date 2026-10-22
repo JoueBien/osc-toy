@@ -1,3 +1,3 @@
 /** Export jest test utils */
-export { setupClient } from "./testing/setupClient";
-export { setupServer } from "./testing/setupServer";
+export { setupClient } from "./testing/setupClient.ts";
+export { setupServer } from "./testing/setupServer.ts";
